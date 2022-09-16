@@ -14,11 +14,6 @@ Metrics = {
     'total_profit': 0.0,
     'max_dd': 0.0,
     'annual_return': 0.0,
-    'max_margin_ratio': 0.0,
-    'lpr': None,
-    'pmr': None,
-    'insuff_margin_count': None,
-    'min_margin': None,
     'paid_fees': 0.0,
     'win_rate': 0,
     'n_of_longs': 0,
@@ -38,7 +33,6 @@ Metrics = {
     'market_change': 0.0,
     'seq_hps': 'None',
     'parameters': 'None',
-    'bench_vol': 0.0,
 }
 
 refine_file_header = ['Pair',
@@ -50,10 +44,6 @@ refine_file_header = ['Pair',
                       'Longs %',
                       'Short %',
                       'Total Net Profit',
-                      'Max. MR',
-                      'PMR',
-                      'Max. LP Rate',
-                      'Insf. Margin Count',
                       'Max.DD',
                       'Annual Profit',
                       'Winrate',
@@ -67,19 +57,13 @@ refine_file_header = ['Pair',
                       'Num. of Wins',
                       'Num. of Losses',
                       'Paid Fees',
-                      'Market Change',
-                      'Benchmark Volatility'
-                      ]
+                      'Market Change']
 
 refine_console_header1 = ['Dna',
                           'Total',
                           'Longs',
                           'Shorts',
                           'Total Net',
-                          'Max.',
-                          'PMR',
-                          'LP',
-                          'Insff.',
                           'Max.',
                           'Annual',
                           'Win',
@@ -93,19 +77,12 @@ refine_console_header1 = ['Dna',
                           'Winning',
                           'Losing',
                           'Paid',
-                          'Market',
-                          'Benchmark'
-                          ]
-
+                          'Market']
 refine_console_header2 = ['String',
                           'Trades',
                           '%',
                           '%',
                           'Profit %',
-                          'Margin %',
-                          '%',
-                          'Rate',
-                          'M.Count',
                           'DD %',
                           'Return %',
                           'Rate %',
@@ -119,16 +96,86 @@ refine_console_header2 = ['String',
                           'Trades',
                           'Trades',
                           'Fees',
-                          'Change %',
-                          'Volat. %'
-                          ]
-
-refine_console_formatter = '{: <22} {: <6} {: <5} {: <7}{: <12} {: <8} {: <8} {: <8} {: <8} {: <8} {: <10} {: <8} {: <8} {: <8} {: <8} {: <8} {: <8} ' \
-                           '{: <12} {: <12} {: <10} {: <8} {: <8} {: <8} {: <8}'
-
-random_console_formatter = '{: <12} {: <12} {: <6} {: <5} {: <7} {: <12} {: <8} {: <8} {: <8} {: <8} {: <8} {: <10} {: <8} {: <8} {: <8} {: <8} {: <8} {: <8} ' \
+                          'Change %']
+refine3_console_header1 = ['Dna',
+                          '_Total',
+                          'Max.DD',
+                          'Sharpe',
+                          'Total Net',
+                          'Max.',
+                          'Annual',
+                          'Win',
+                          'Serenity',
+                          'Sharpe',
+                          'Calmar',
+                          'Winning',
+                          'Losing',
+                          'Largest',
+                          'Largest',
+                          'Winning',
+                          'Losing',
+                          'Paid',
+                          'Market']
+refine3_console_header2 = ['String',
+                          'Profit%',
+                          '%',
+                          '',
+                          'Profit %',
+                          'DD %',
+                          'Return %',
+                          'Rate %',
+                          'Index',
+                          'Ratio',
+                          'Ratio',
+                          'Streak',
+                          'Streak',
+                          'Win. Trade',
+                          'Los. Trade',
+                          'Trades',
+                          'Trades',
+                          'Fees',
+                          'Change %']
+refine_console_formatter = '{: <12} {: <6} {: <5} {: <7}{: <12} {: <8} {: <10} {: <8} {: <8} {: <8} {: <8} {: <8} {: <8} ' \
+                           '{: <12} {: <12} {: <10} {: <8} {: <8} {: <8}'
+refine3_console_formatter = '{: <13} {: <8} {: <6} {: <6} {: <8} {: <8} {: <10} {: <8} {: <8} {: <8} {: <8} {: <8} {: <8} ' \
                            '{: <12} {: <12} {: <10} {: <8} {: <8} {: <8}'
 
+
+refinewf_console_header1 = ['Dna',
+                          'TNP',
+                          'Max DD',
+                          'Sharpe',
+                          '| TNP ',
+                          'Max DD',
+                          'Annual',
+                          'WR',
+                          'Serenity',
+                          'Sharpe',
+                          'Calmar',
+                          'Win/Lose',
+                          'Win/Lose',
+                          'Max',
+                          'Max',
+                          'Paid']
+refinewf_console_header2 = ['String',
+                          'Last',
+                          'Last',
+                          'Last',
+                          '|  % ',
+                          '  %',
+                          'Ret %',
+                          '  %',
+                          'Index',
+                          'Ratio',
+                          'Ratio',
+                          'Streak',
+                          'Trades',
+                          'Win',
+                          'Loss',
+                          'Fees']
+
+refinewf_console_formatter = '{: <26} {: <8} {: <6} {: <6} {: <8} {: <8} {: <10} {: <6} {: <8} {: <8} {: <8} {: <8} ' \
+                           '{: <12} {: <12} {: <10} {: <8}'
 random_file_header = ['Pair',  # TODO Pairs for multi routes?
                       'TF',
                       'Dna',
@@ -138,11 +185,7 @@ random_file_header = ['Pair',  # TODO Pairs for multi routes?
                       'Longs %',
                       'Short %',
                       'Total Net Profit',
-                      'Max. MR',
-                      'PMR',
-                      'Max. LP Rate',
-                      'Insf. Margin Count',
-                      'Max. DD',
+                      'Max.DD',
                       'Annual Profit',
                       'Winrate',
                       'Serenity',
@@ -155,9 +198,7 @@ random_file_header = ['Pair',  # TODO Pairs for multi routes?
                       'Num. of Wins',
                       'Num. of Losses',
                       'Paid Fees',
-                      'Market Change',
-                      'Benchmark Volatility'
-                      ]
+                      'Market Change']
 
 random_console_header1 = ['Start',
                           'End',
@@ -165,10 +206,6 @@ random_console_header1 = ['Start',
                           'Longs',
                           'Shorts',
                           'Total Net',
-                          'Max.',
-                          'PMR',
-                          'LP',
-                          'Insff.',
                           'Max.',
                           'Annual',
                           'Win',
@@ -182,20 +219,13 @@ random_console_header1 = ['Start',
                           'Winning',
                           'Losing',
                           'Paid',
-                          'Market',
-                          'Benchmark'
-                          ]
-                          
+                          'Market']
 random_console_header2 = ['Date',
                           'Date',
                           'Trades',
                           '%',
                           '%',
                           'Profit %',
-                          'Margin %',
-                          '%',
-                          'Rate',
-                          'M.Count',
                           'DD %',
                           'Return %',
                           'Rate %',
@@ -209,6 +239,7 @@ random_console_header2 = ['Date',
                           'Trades',
                           'Trades',
                           'Fees',
-                          'Change %',
-                          'Volat. %'
-                          ]
+                          'Change %']
+
+random_console_formatter = '{: <12} {: <12} {: <6} {: <5} {: <7}{: <12} {: <8} {: <10} {: <8} {: <8} {: <8} {: <8} {: <8} {: <8} ' \
+                           '{: <12} {: <12} {: <10} {: <8} {: <8} {: <8}'
