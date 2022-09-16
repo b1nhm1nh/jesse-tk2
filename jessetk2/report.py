@@ -23,9 +23,9 @@ def portfolio_metrics(data) -> List[
         ['Ratio Avg Win / Avg Loss', round(data['ratio_avg_win_loss'], 2)],
         ['Percent Profitable', f"{str(round(data['win_rate'] * 100))}%"],
         ['Longs | Shorts', f"{round(data['longs_percentage'])}% | {round(data['shorts_percentage'])}%"],
-        ['Avg Holding Bars', round(data['average_holding_period']/data['timeframe'], 2)],
-        ['Winning Trades Avg Holding Bars', round(data['average_winning_holding_period']/data['timeframe'], 2)],
-        ['Losing Trades Avg Holding Bars', round(data['average_losing_holding_period']/data['timeframe'], 2)],
+        ['Avg Holding Bars', str(round(data['average_holding_period']/data['timeframe'], 2)) + " bars"],
+        ['Winning Trades Avg Bars', str(round(data['average_winning_holding_period']/data['timeframe'], 2)) + " bars"],
+        ['Losing Trades Avg Bars', str(round(data['average_losing_holding_period']/data['timeframe'], 2)) + " bars"],
         ['Avg Holding Time', jh.readable_duration(data['average_holding_period'], 3)],
         ['Winning Trades Avg Holding Time',
          np.nan if np.isnan(data['average_winning_holding_period']) else jh.readable_duration(
