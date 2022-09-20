@@ -1,4 +1,5 @@
 # from email.policy import default
+from uuid import RESERVED_FUTURE
 import numpy as np
 import os
 import sys
@@ -194,6 +195,8 @@ def _convert_numpy_to_float(d):
             d[k] = round(float(v),2)
         elif isinstance(v, float):
             d[k] = round(v,2)
+        if v == np.inf or v == np.nan or v == None:
+            d[k] = 0
     return d
 
 @cli.command()
@@ -301,13 +304,18 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
                 hyperparameters=hps, 
                 generate_charts=True
             )
-            _convert_numpy_to_float(result['metrics'])
+            # print(f"Result {result}")
+            metrics = result['metrics']
+            _convert_numpy_to_float(metrics)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print("Backtest Error Exception: ", e)
             got_exception = True
 
-        if got_exception or result['metrics']['total'] == 0:
-            result['metrics'] = {'total': 0, 'total_winning_trades': 0, 'total_losing_trades': 0,
+        if got_exception or metrics['total'] == 0:
+            # result: dict = []
+            metrics = {'total': 0, 'total_winning_trades': 0, 'total_losing_trades': 0,
                             'starting_balance': 0, 'finishing_balance': 0, 'win_rate': 0,
                             'ratio_avg_win_loss': 0, 'longs_count': 0, 'longs_percentage': 0,
                             'shorts_percentage': 0, 'shorts_count': 0, 'fee': 0, 'net_profit': 0,
@@ -321,15 +329,15 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
                             'losing_streak': 0, 'largest_losing_trade': 0, 'largest_winning_trade': 0,
                             'current_streak': 0}                         
         if show_json_metrics:
-            print("JSON Metrics|", json.dumps(result['metrics']))
+            print("JSON Metrics|", json.dumps(metrics))
  
         if show_metrics:
             first_close = candles[jh.key(exchange_name, symbol)]['candles'][0][2]
             last_close = candles[jh.key(exchange_name, symbol)]['candles'][-1][2]
             change = ((last_close - first_close) / first_close) * 100.0
             diff = candles[jh.key(exchange_name, symbol)]['candles'][-1][0] - candles[jh.key(exchange_name, symbol)]['candles'][-2][0]
-            result['metrics']['timeframe'] = jh.timeframe_to_one_minutes(timeframe) * 60
-            data = portfolio_metrics(result['metrics'])
+            metrics['timeframe'] = jh.timeframe_to_one_minutes(timeframe) * 60
+            data = portfolio_metrics(metrics)
             data.append(['Market Change', f"{str(round(change, 2))}%"])        
             table.key_value(data, 'Metrics', alignments=('left', 'right'))
 
