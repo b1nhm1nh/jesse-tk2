@@ -310,7 +310,7 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
         except Exception as e:
             import traceback
             traceback.print_exc()
-            print("Backtest Error Exception: ", e)
+            # print("Backtest Error Exception: ", e)
             got_exception = True
 
         if got_exception or metrics['total'] == 0:
