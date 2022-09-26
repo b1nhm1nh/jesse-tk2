@@ -1,5 +1,5 @@
 #psycopg2_binary~=2.9.1
-numba~=0.53.1
+numba~=0.56.2
 optuna~=2.10.0
 #psycopg2~=2.9.3
 python_dateutil~=2.8.2
