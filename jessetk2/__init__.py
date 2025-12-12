@@ -101,7 +101,12 @@ def elapsed_timer():
 
 def _get_candles_with_cache(exchange: str, symbol: str, start_date: str, finish_date: str) -> np.ndarray:
     from jesse.research import get_candles
-    candles = get_candles(exchange, symbol, '1m', start_date, finish_date)
+    import arrow
+    # Convert string dates to timestamps
+    start_timestamp = arrow.get(start_date, 'YYYY-MM-DD').int_timestamp * 1000
+    finish_timestamp = arrow.get(finish_date, 'YYYY-MM-DD').int_timestamp * 1000
+    # get_candles returns (warmup_candles, trading_candles) tuple
+    _, candles = get_candles(exchange, symbol, '1m', start_timestamp, finish_timestamp)
     return candles
 
     path = pathlib.Path('storage/bulk')
@@ -204,8 +209,9 @@ def _convert_numpy_to_float(d):
 @click.argument('start_date', required=True, type=str)
 @click.argument('finish_date', required=True, type=str)
 @click.option(
+    '--symbol', default='ETH-USDT', show_default=True, help='Trading pair symbol (e.g., BTC-USDT)')
+@click.option(
     '--hp', default='', show_default=True, help='Hyperparameters payload as dict')
-
 @click.option(
     '--tf', default='1h', show_default=True, help='Timeframe')
 @click.option(
@@ -218,7 +224,7 @@ def _convert_numpy_to_float(d):
     '--show-json-metrics/--no-show-json-metrics', default=False,
     help='Displays Json Metric.'
 )
-def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str, extra_tf: str, show_metrics: bool, show_json_metrics: bool)->None:
+def backtest(strategy: str, start_date: str, finish_date: str, symbol: str, hp: str, tf: str, extra_tf: str, show_metrics: bool, show_json_metrics: bool)->None:
     import arrow
     import json
 
@@ -235,9 +241,8 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
 
 
     # print ("Loading candles...")
- 
+
     exchange_name = 'Binance Perpetual Futures'
-    symbol = 'ETH-USDT'
     timeframe = tf
     # '1h'
     config = {
@@ -288,7 +293,7 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
         },
     }
     # jh.timeframe_to_one_minutes
-    hps = []
+    hps = None
     if len(hp) > 0:
         hps = json.loads(hp)
 
@@ -301,8 +306,7 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
                 routes,
                 extra_routes,
                 candles,
-                hyperparameters=hps, 
-                generate_charts=True
+                hyperparameters=hps
             )
             # print(f"Result {result}")
             metrics = result['metrics']
@@ -342,198 +346,6 @@ def backtest(strategy: str, start_date: str, finish_date: str, hp: str, tf: str,
             table.key_value(data, 'Metrics', alignments=('left', 'right'))
 
         print("Elapsed: ", round(elapsed(),2), ' seconds')
-
-
-@cli.command()
-@click.argument('start_date', required=True, type=str)
-@click.argument('finish_date', required=True, type=str)
-@click.option('--debug/--no-debug', default=False,
-              help='Displays logging messages instead of the progressbar. Used for debugging your strategy.')
-@click.option('--csv/--no-csv', default=False,
-              help='Outputs a CSV file of all executed trades on completion.')
-@click.option('--json/--no-json', default=False,
-              help='Outputs a JSON file of all executed trades on completion.')
-@click.option('--fee/--no-fee', default=True,
-              help='You can use "--no-fee" as a quick way to set trading fee to zero.')
-@click.option('--chart/--no-chart', default=False,
-              help='Generates charts of daily portfolio balance and assets price change. Useful for a visual comparision of your portfolio against the market.')
-@click.option('--tradingview/--no-tradingview', default=False,
-              help="Generates an output that can be copy-and-pasted into tradingview.com's pine-editor too see the trades in their charts.")
-@click.option('--full-reports/--no-full-reports', default=False,
-              help="Generates QuantStats' HTML output with metrics reports like Sharpe ratio, Win rate, Volatility, etc., and batch plotting for visualizing performance, drawdowns, rolling statistics, monthly returns, etc.")
-@click.option(
-    '--dna', default='None', show_default=True, help='Base32 encoded dna string payload')
-@click.option(
-    '--hp', default='None', show_default=True, help='Hyperparameters payload as dict')
-@click.option(
-    '--seq', default='None', show_default=True, help='Fixed width hyperparameters payload')
-@click.option(
-    '--prefix', default="", show_default=True,
-    help='Prefix file name')
-
-def backtest_old(start_date: str, finish_date: str, debug: bool, csv: bool, json: bool, fee: bool, chart: bool,
-             tradingview: bool, full_reports: bool, dna: str, hp: str, seq: str, prefix: str) -> None:
-    """
-    backtest mode. Enter in "YYYY-MM-DD" "YYYY-MM-DD"
-    """
-    from jesse.config import config
-    from jesse.routes import router
-    from jesse.modes import backtest_mode
-    validate_cwd()
-
-    config['app']['trading_mode'] = 'backtest'
-    # register_custom_exception_handler()
-    # debug flag
-    config['app']['debug_mode'] = debug
-    
-    # fee flag
-    if not fee:
-        for e in config['app']['trading_exchanges']:
-            config['env']['exchanges'][e]['fee'] = 0
-            get_exchange(e).fee = 0
-    # print(sys.argv)
-
-    # for r in router.routes:
-    #     hp_new = None
-
-    #     StrategyClass = jh.get_strategy_class(r.strategy_name)
-    #     r.strategy = StrategyClass()
-
-    #     r.strategy.name = r.strategy_name
-    #     r.strategy.exchange = r.exchange
-    #     r.strategy.symbol = r.symbol
-    #     r.strategy.timeframe = r.timeframe
-    hp_new = None
-    routes_dna = None
-    decoded_base32_dna = None
-
-    r = router.routes[0]
-    StrategyClass = jh.get_strategy_class(r.strategy_name)
-    r.strategy = StrategyClass()
-    r.strategy.name = r.strategy_name
-    r.strategy.exchange = r.exchange
-    r.strategy.symbol = r.symbol
-    r.strategy.timeframe = r.timeframe
-
-    # Convert and inject regular DNA string to route
-    if r.dna:  # and dna != 'None' and seq != 'None' and hp != 'None':
-        routes_dna = dna
-        hp_new = jh.dna_to_hp(r.strategy.hyperparameters(), r.dna)
-        print(f'DNA: {r.dna} -> HP: {hp_new}')
-
-    # Convert and inject base32 encoded DNA payload to route
-    # r.dna is None and seq is None and hp is None:
-    if dna != 'None' and hp_new is None:
-        decoded_base32_dna = utils.decode_base32(dna)
-        print('Decode base32', utils.decode_base32(dna))
-        hp_new = jh.dna_to_hp(r.strategy.hyperparameters(), decoded_base32_dna)
-        print(f'Base32 DNA: {dna} -> {hp_new}')
-
-    # Convert and inject SEQ encoded payload to route
-    # and hp_new is None and r.dna is None and dna is None and hp is None:
-    if seq != 'None' and hp_new is None:
-        seq_encoded = utils.decode_seq(seq)
-        hp_new = {
-            p['name']: int(val)
-            for p, val in zip(r.strategy.hyperparameters(), seq_encoded)
-        }
-
-
-        # hp_new.update(hp)
-        # print('New hp:', hp_new)
-        # r.strategy.hp = hp_new
-        print(f'SEQ: {seq} -> {hp_new}')
-
-    hp_dict = None
-    # Convert and inject HP (Json) payload to route
-    # and hp_new is None and r.dna is None and dna is None and seq is None:
-    if hp != 'None' and hp_new is None:
-        # print('HP:', hp)
-        hp_dict = json_lib.loads(hp.replace("'", '"').replace('%', '"').replace("True", 'true').replace("False", 'false'))
-        hp_new = {p['name']: hp_dict[p['name']] for p in r.strategy.hyperparameters()}
-
-        # hp_new.update(hp)
-        # print('New hp:', hp_new)
-        # print("-----------------")
-        # print(f'Json HP: {hp} -> {hp_new}')
-        # quit()
-
-    # <-------------------------------
-
-    router.routes[0].dna = decoded_base32_dna
-    print('Router:', router.routes[0])
-    # Inject Seq payload to route ->
-    # if seq != 'None':
-    #     print('Seq to decode:', seq)
-    #     seq_encoded = utils.decode_seq(seq)
-
-    #     for r in router.routes:
-    #         StrategyClass = jh.get_strategy_class(r.strategy_name)
-    #         r.strategy = StrategyClass()
-
-    #         hp_new = {}
-
-    #         for p, val in zip(r.strategy.hyperparameters(), seq_encoded):
-    #             # r.strategy.hyperparameters()[p] = hp[p]
-    #             # hp_new[p['name']] = hp[p]
-    #             # print(p['name'], p['default'])
-    #             hp_new[p['name']] = int(val)
-    #         # hp_new.update(hp)
-    #         # print('New hp:', hp_new)
-    #         # r.strategy.hp = hp_new
-    #         print('New hp:', hp_new)
-    #         # sleep(5)
-    # # <-------------------------------
-    # Inject payload HP to route
-    # refactor this shit
-    # for r in router.routes:
-    #     # print(r)
-    #     StrategyClass = jh.get_strategy_class(r.strategy_name)
-    #     r.strategy = StrategyClass()
-    #     if hp != 'None':
-    #         print('Payload: ', hp, 'type:', type(hp))
-
-    #         hp_dict = json_lib.loads(hp.replace("'", '"').replace('%', '"'))
-
-    #         print('Old hp:', r.strategy.hyperparameters())
-    #         hp_new = {}
-
-    #         for p in r.strategy.hyperparameters():
-    #             # r.strategy.hyperparameters()[p] = hp[p]
-    #             # hp_new[p['name']] = hp[p]
-    #             # print(p['name'], p['default'])
-    #             hp_new[p['name']] = hp_dict[p['name']]
-
-    #         # hp_new.update(hp)
-    #         # print('New hp:', hp_new)
-    #         r.strategy.hp = hp_new
-
-    # backtest_mode._initialized_strategies()
-    backtest2r_mode.run(start_date, finish_date, chart=chart, tradingview=tradingview, csv=csv,
-                      json=json, full_reports=full_reports, hyperparameters=hp_new, prefix=prefix)
-
-    # Fix: Print out SeQ to console to help metrics module to grab it
-    if seq != 'None':
-        print('Sequential Hps:    |', seq)
-
-    if hp != 'None':
-        print('Sequential Hps:    |', hp)
-
-    if decoded_base32_dna:
-        print('Dna String:        |', decoded_base32_dna)
-
-    if routes_dna:
-        print('Dna String:        |', routes_dna)
-    # try:    # Catch error when there's no trades.
-    #     data = report.portfolio_metrics()
-    #     print(data)
-    #     print('*' * 50)
-    #     print(type(data))
-    #     print(data[0])
-    # except:
-    #     print('No Trades, no metrics!')
-
-    db.close_connection()
 
 
 def print_initial_msg():
@@ -1067,7 +879,7 @@ def import_routes(start_date: str) -> None:
         from jesse.config import config
         from jesse.modes import import_candles_mode
         from jesse.routes import router
-        from jesse.services import db
+        from jesse.services.db import database
         config['app']['trading_mode'] = 'import-candles'
     except Exception as e:
         print(e)
@@ -1088,15 +900,15 @@ def import_routes(start_date: str) -> None:
         print(f'Importing {exchange} {pair}')
 
         try:
-            import_candles_mode.run(exchange, pair, sd, skip_confirmation=True)
+            import_candles_mode.run('', exchange, pair, sd, running_via_dashboard=False)
         except KeyboardInterrupt:
             print('Terminated!')
-            db.close_connection()
+            database.close_connection()
             sys.exit()
         except:
             print(f'Import error, skipping {exchange} {pair}')
 
-    db.close_connection()
+    database.close_connection()
 
 
 @cli.command()

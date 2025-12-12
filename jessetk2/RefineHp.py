@@ -9,7 +9,6 @@ from timeit import default_timer as timer
 
 from jesse.modes import backtest_mode
 from jesse.routes import router
-from jesse.services import db
 from jesse.services import report
 
 import jessetk.Vars as Vars
