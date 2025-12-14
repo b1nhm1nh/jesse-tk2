@@ -134,3 +134,124 @@ The command displays a metrics table including:
 - Average win/loss amounts
 
 Use `--show-json-metrics` for machine-readable JSON output.
+
+---
+
+# jesse-tk2 pairscan
+
+Scan multiple trading pairs with a single strategy to find the best performing pairs. Uses the same parquet-based backtest engine as `jesse-tk2 backtest` with concurrent execution support.
+
+## Basic Usage
+
+```bash
+jesse-tk2 pairscan STRATEGY PAIRS_FILE START_DATE FINISH_DATE [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Description | Example |
+|----------|-------------|---------|
+| `STRATEGY` | Strategy class name | `Combo03_Scalper_v01` |
+| `PAIRS_FILE` | Python file containing pairs list | `jessetkdata/pairfiles/testpairs.py` |
+| `START_DATE` | Backtest start date | `2024-01-01` |
+| `FINISH_DATE` | Backtest end date | `2024-06-30` |
+
+### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--tf` | `1h` | Timeframe for backtesting |
+| `--cpu` | `1` | Number of concurrent workers (0 = all cores - 1) |
+| `--exchange` | `Binance Perpetual Futures` | Exchange name |
+| `--hp` | `""` | Hyperparameters as JSON dict |
+
+## Examples
+
+### Basic Pair Scan
+
+```bash
+jesse-tk2 pairscan MyStrategy jessetkdata/pairfiles/testpairs.py 2024-01-01 2024-06-30
+```
+
+### With 4-Hour Timeframe and 4 Workers
+
+```bash
+jesse-tk2 pairscan MyStrategy jessetkdata/pairfiles/testpairs.py 2024-01-01 2024-06-30 --tf 4h --cpu 4
+```
+
+### Use All CPU Cores
+
+```bash
+jesse-tk2 pairscan MyStrategy jessetkdata/pairfiles/testpairs.py 2024-01-01 2024-06-30 --cpu 0
+```
+
+### With Hyperparameters
+
+```bash
+jesse-tk2 pairscan MyStrategy jessetkdata/pairfiles/testpairs.py 2024-01-01 2024-06-30 --hp '{"ema_period": 20}'
+```
+
+## Pairs File Format
+
+Create a Python file with a `pairs` list:
+
+```python
+# jessetkdata/pairfiles/testpairs.py
+
+pairs = [
+    'BTC-USDT',
+    'ETH-USDT',
+    'SOL-USDT',
+    'DOGE-USDT',
+    # ... more pairs
+]
+```
+
+## Output
+
+### Console Output
+
+Results are displayed sorted by Sharpe ratio:
+
+```
+Pair              Sharpe    Profit%   MaxDD%   WinRate%   Trades   Calmar   Serenity  MktChg%
+----------------------------------------------------------------------------------------------------
+BTC-USDT            3.53       15.7     -4.5       60.0        7    28.35       0.00     43.9
+ADA-USDT            3.30       10.8     -1.4       80.0        5    55.48       0.00      7.7
+DOGE-USDT           2.60       14.6     -3.2       80.0        4    35.70       0.00     28.5
+```
+
+### Output Files
+
+Results are saved to `jessetkdata/`:
+
+| File | Description |
+|------|-------------|
+| `results/PairScan-...-{timestamp}.csv` | Full metrics CSV report |
+| `pairfiles/PairScan-...-{timestamp}.py` | Pairs sorted by Sharpe ratio |
+
+### Sorted Pairs File
+
+The output pairs file can be used for further analysis:
+
+```python
+# jessetkdata/pairfiles/PairScan-Binance Perpetual Futures-1h--2024-01-01--2024-06-30--20241214_130000.py
+
+# Pairs sorted by Sharpe ratio
+# Strategy: MyStrategy
+# Timeframe: 1h
+# Period: 2024-01-01 -> 2024-06-30
+
+pairs = [
+    'BTC-USDT',  # Sharpe: 3.53, Profit: 15.7%
+    'ADA-USDT',  # Sharpe: 3.30, Profit: 10.8%
+    'DOGE-USDT',  # Sharpe: 2.60, Profit: 14.6%
+    # ...
+]
+```
+
+## Performance Tips
+
+- Use `--cpu 0` to utilize all available CPU cores for faster scanning
+- Start with a smaller pairs file to test, then expand
+- Pairs without data will show as errors and be skipped

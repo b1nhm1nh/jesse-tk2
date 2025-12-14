@@ -1397,3 +1397,42 @@ def testpairs(start_date: str, finish_date: str) -> None:
     validateconfig()
     makedirs()
     run(_start_date=start_date, _finish_date=finish_date)
+
+
+@cli.command()
+@click.argument('strategy', required=True, type=str)
+@click.argument('pairs_file', required=True, type=str)
+@click.argument('start_date', required=True, type=str)
+@click.argument('finish_date', required=True, type=str)
+@click.option(
+    '--tf', default='1h', show_default=True, help='Timeframe (e.g., 1h, 4h, 1D)')
+@click.option(
+    '--exchange', default='Binance Perpetual Futures', show_default=True,
+    help='Exchange name')
+@click.option(
+    '--hp', default='', show_default=True, help='Hyperparameters as JSON dict')
+@click.option(
+    '--cpu', default=1, show_default=True,
+    help='Number of concurrent workers (0 = all cores)')
+def pairscan(strategy: str, pairs_file: str, start_date: str, finish_date: str,
+             tf: str, exchange: str, hp: str, cpu: int) -> None:
+    """
+    Scan multiple pairs with a strategy using parquet backtest.
+
+    Example: jesse-tk2 pairscan MyStrategy jessetkdata/pairfiles/testpairs.py 2024-01-01 2024-06-30 --tf 4h --cpu 4
+    """
+    import json
+    makedirs()
+
+    hp_dict = None
+    if hp:
+        hp_dict = json.loads(hp)
+
+    if cpu == 0:
+        cpu = os.cpu_count() - 1
+        if cpu == 0: 
+            cpu = 1
+
+    from jessetk2.PairScan import run
+    run(strategy=strategy, pairs_file=pairs_file, start_date=start_date,
+        finish_date=finish_date, timeframe=tf, exchange=exchange, hp=hp_dict, cpu=cpu)
