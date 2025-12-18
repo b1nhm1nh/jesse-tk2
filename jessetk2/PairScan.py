@@ -162,7 +162,9 @@ class PairScan:
         }
 
         self.ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.filename = f'PairScan-{exchange}-{timeframe}--{start_date}--{finish_date}'
+        # Sanitize exchange name for filename (replace spaces with underscores)
+        exchange_safe = exchange.replace(' ', '_')
+        self.filename = f'PairScan-{exchange_safe}-{timeframe}--{start_date}--{finish_date}'
         self.report_file_name = f'{jessetkdir}/results/{self.filename}--{self.ts}.csv'
         self.log_file_name = f'{jessetkdir}/logs/{self.filename}--{self.ts}.log'
         self.pairfile_name = f'{jessetkdir}/pairfiles/{self.filename}--{self.ts}.py'
